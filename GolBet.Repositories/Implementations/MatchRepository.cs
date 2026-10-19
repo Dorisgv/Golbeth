@@ -1,4 +1,5 @@
-﻿// GolBet.Repositories/Implementations/MatchRepository.cs 
+﻿//ARCHIVO TOCADO----------------------------------------------------------------------------------------------
+// GolBet.Repositories/Implementations/MatchRepository.cs 
 
 using GolBet.Entities;
 using GolBet.Entities.Enums;
@@ -12,7 +13,8 @@ public class MatchRepository : GenericRepository<Match>, IMatchRepository
 {
     public MatchRepository(AppDbContext context) : base(context) { }
 
-    public async Task<IEnumerable<Match>> GetAllWithTeamsAsync(MatchStatus? status = null)
+    //Add code: 🌸 ---------------------------------------------------------------------------------------------
+    public async Task<IEnumerable<Match>> GetAllWithTeamsAsync(MatchStatus? status = null, string? search = null) //este es el parametro!
     {
         var query = _dbSet
             .Include(m => m.HomeTeam)
@@ -21,11 +23,19 @@ public class MatchRepository : GenericRepository<Match>, IMatchRepository
             .AsNoTracking()
             .AsQueryable();
 
-        if (status.HasValue)
+        if (status.HasValue)                                              
             query = query.Where(m => m.Status == status.Value);
+
+        if (!string.IsNullOrWhiteSpace(search))                    //Cambio realizado, IF ADD
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(m =>
+                m.HomeTeam.Name.ToLower().Contains(term) ||
+                m.AwayTeam.Name.ToLower().Contains(term));
+        }
         return await query.OrderBy(m => m.Date).ToListAsync();
     }
-
+// ---------------------------------------------------------------------------------------------------------------------------
     public async Task<Match?> GetByIdWithDetailsAsync(int id)
         => await _dbSet
             .Include(m => m.HomeTeam)
